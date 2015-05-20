@@ -15,12 +15,13 @@ class CascadeSVM:
 
     This could be done in parallel, though this is a serial implementation
     '''
-    def __init__(self, model, nx=500, n_iter=1):
+    def __init__(self, model, nx=500, n_iter=1, nmax=1000):
         self.nx = nx
         self.basemodel = model
         self._split = 0
         self._max_splits = 50
         self.n_iter = 1     # TO FIX: currently using more iterations is broken
+        self.nmax = nmax
 
     def fit(self, X, y):
         '''
@@ -67,7 +68,14 @@ class CascadeSVM:
         rightX, righty, _ = self._recurse(X[n/2:, :], y[n/2:], level+1)
 
         # recurse and combine using another SVM fit
-        return self._fit(np.vstack((leftX, rightX)), np.hstack((lefty, righty)), level)
+        combinedX = np.vstack((leftX, rightX))
+        combinedy = np.hstack((lefty, righty))
+        # cut observations if too many
+        if len(combinedy) > self.nmax:
+            combinedy = combinedy[:self.nmax]
+            combinedX = combinedX[:self.nmax]
+
+        return self._fit(combinedX, combinedy, level)
 
     def _fit(self, X, y, level):
         # print to show what's going on
