@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+'''
+Run using:
+[SparkDir]/spark/bin/spark-submit --driver-memory 2g mnist.py
+'''
+
 import sys
 
 from pyspark import SparkConf, SparkContext
@@ -43,7 +48,7 @@ if __name__ == "__main__":
     print 'Predicting outcomes test set'
     labelsAndPredsTest = testRDD.map(lambda p: (p.label, lrm.predict(p.features)))
     testErr = labelsAndPredsTest.filter(lambda (v, p): v != p).count() / float(testRDD.count())
-    print("Test Error = " + str(trainErr))
+    print("Test Error = " + str(testErr))
 
     # clean up
     sc.stop()
