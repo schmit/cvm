@@ -19,7 +19,7 @@ def parseData(line, obj):
 if __name__ == "__main__":
     if (len(sys.argv) != 1):
         print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
-            "cascade.py"
+            "mnist.py"
         sys.exit(1)
 
     # set up environment
