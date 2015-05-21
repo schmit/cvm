@@ -17,6 +17,9 @@ def cascade(labeledPointRDD, reducer, nmax):
     leafsRDD = labeledPointRDD.repartition(numPartitions)
 
     while numPartitions > 1:
+        print 'Currently {} partitions left'.format(numPartitions)
+        print 'Size of data: {}'.format(leafsRDD.count())
+
         numPartitions = int(numPartitions / 2)
         leafsRDD = leafsRDD.mapPartitions(reducer).coalesce(numPartitions)
 

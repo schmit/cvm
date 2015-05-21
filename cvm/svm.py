@@ -14,6 +14,8 @@ class KernelSVM:
         self.nmax = nmax
         self.model = svm.SVC(kernel='rbf', C=C, gamma=gamma)
 
+        self.lost_svs = 0
+
     def train(self, labeledPoints):
         labeledPoints = cascade(labeledPoints, self._reduce, self.nmax)
         X, y = self._readiterator(labeledPoints)
@@ -25,7 +27,14 @@ class KernelSVM:
     def _reduce(self, iterator):
         X, y = self._readiterator(iterator)
         self.model.fit(X, y)
-        return self._returniterator(self.model.support_, X, y)
+        if len(self.model.support_) < len(y) / 2:
+            return self._returniterator(self.model.support_, X, y)
+
+        vectors_lost = len(self.model.support_) - len(y)/2
+        self.lost_svs += vectors_lost
+        print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
+        random_indices = np.random.choice(self.model.support_, len(y) / 2, replace=False)
+        return self._returniterator(random_indices, X, y)
 
     def _readiterator(self, iterator):
         ys = []
