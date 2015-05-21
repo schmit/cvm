@@ -8,7 +8,6 @@ from sklearn import svm
 from pyspark.mllib.regression import LabeledPoint
 
 from cascade import cascade
-from reducers import randomreduce
 
 class KernelSVM:
     def __init__(self, kernel='rbf', C=1.0, nmax=800, gamma=1.0, degree=3):
