@@ -23,7 +23,7 @@ def parseData(line, obj):
 
 if __name__ == "__main__":
     if (len(sys.argv) != 1):
-        print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
+        print "Usage: [SPARKDIR]/bin/spark-submit --driver-memory 2g " + \
             "mnist.py"
         sys.exit(1)
 
