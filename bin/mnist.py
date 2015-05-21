@@ -10,7 +10,7 @@ import sys
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
-from cvm.svm import KernelSVM
+from cvm.svm import NuSVM
 
 def objective(x):
     # prediction objective
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     testRDD = sc.textFile('data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
 
     print 'Fitting model'
-    svm = KernelSVM(gamma=0.0000001, C=1000000.0)
+    svm = NuSVM(gamma=0.005, nu=0.3)
     svm.train(trainRDD)
 
     print 'Predicting outcomes training set'
