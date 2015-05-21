@@ -10,7 +10,7 @@ from pyspark.mllib.regression import LabeledPoint
 from cascade import cascade
 
 class KernelSVM:
-    def __init__(self, kernel='rbf', C=1.0, nmax=800, gamma=1.0, degree=3):
+    def __init__(self, kernel='rbf', C=1.0, nmax=2000, gamma=1.0, degree=3):
         self.nmax = nmax
         self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
 
@@ -54,35 +54,23 @@ class KernelSVM:
             yield LabeledPoint(y[i], X[i])
 
 
-class RandomSVM:
-    def __init__(self, kernel='rbf', C=1.0, nmax=800, gamma=1.0, degree=3):
+class NuSVM(KernelSVM):
+    def __init__(self, kernel='rbf', nu=0.3, nmax=2000, gamma=1.0, degree=3):
+        self.nmax = nmax
+        self.create_model = lambda : svm.NuSVC(kernel=kernel, nu=nu, gamma=gamma, degree=degree)
+
+        self.lost_svs = 0
+
+
+class RandomSVM(KernelSVM):
+    def __init__(self, kernel='rbf', C=1.0, nmax=2000, gamma=1.0, degree=3):
         self.nmax = nmax
         self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
 
         self.lost_svs = 0
-
-    def train(self, labeledPoints):
-        labeledPoints = cascade(labeledPoints, self._reduce, self.nmax)
-        X, y = self._readiterator(labeledPoints)
-
-        self.model = self.create_model()
-        self.model.fit(X, y)
-
-    def predict(self, features):
-        return self.model.predict(features)
 
     def _reduce(self, iterator):
         for elem in iterator:
             if random.random() < 0.5:
                 yield elem
 
-    def _readiterator(self, iterator):
-        ys = []
-        xs = []
-        for elem in iterator:
-            ys.append(elem.label)
-            xs.append(elem.features)
-
-        X = np.array(xs)
-        y = np.array(ys)
-        return X, y
