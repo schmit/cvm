@@ -9,11 +9,10 @@ from pyspark.mllib.regression import LabeledPoint
 
 from cascade import cascade
 
-class KernelSVM:
-    def __init__(self, kernel='rbf', C=1.0, nmax=2000, gamma=1.0, degree=3):
+class BaseSVM(object):
+    def __init__(self, nmax):
         self.nmax = nmax
-        self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
-
+        # self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
         self.lost_svs = 0
 
     def train(self, labeledPoints):
@@ -54,16 +53,32 @@ class KernelSVM:
             yield LabeledPoint(y[i], X[i])
 
 
-class NuSVM(KernelSVM):
-    def __init__(self, kernel='rbf', nu=0.3, nmax=2000, gamma=1.0, degree=3):
-        self.nmax = nmax
-        self.create_model = lambda : svm.NuSVC(kernel=kernel, nu=nu, gamma=gamma, degree=degree)
-
-        self.lost_svs = 0
+class SVC(BaseSVM):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
+        super(SVC, self).__init__(nmax)
+        self.create_model = lambda : svm.SVC(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
 
-class RandomSVM(KernelSVM):
-    def __init__(self, kernel='rbf', C=1.0, nmax=2000, gamma=1.0, degree=3):
+class NuSVC(BaseSVM):
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
+        super(NuSVC, self).__init__(nmax)
+        self.create_model = lambda : svm.NuSVC(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
+
+
+class SVR(BaseSVM):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
+        super(SVR, self).__init__(nmax)
+        self.create_model = lambda : svm.SVR(C=C, kernel=kernel, degree=degree, gamma=gamma)
+
+
+class NuSVR(BaseSVM):
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
+        super(SVR, self).__init__(nmax)
+        self.create_model = lambda : svm.NuSVR(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
+
+
+class RandomSVM(BaseSVM):
+    def __init__(self, kernel='rbf', degree=3, C=1.0, gamma=1.0, nmax=2000):
         self.nmax = nmax
         self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
 

@@ -10,11 +10,11 @@ import sys
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
-from cvm.svm import NuSVM
+from cvm.svm import NuSVC
 
 def objective(x):
     # prediction objective
-    return 1*(x>4)
+    return x
 
 def parseData(line, obj):
     fields = line.strip().split(',')
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     testRDD = sc.textFile('data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
 
     print 'Fitting model'
-    svm = NuSVM(gamma=0.005, nu=0.3)
+    svm = NuSVC(gamma=0.01, nu=0.3)
     svm.train(trainRDD)
 
     print 'Predicting outcomes training set'
