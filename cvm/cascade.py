@@ -21,7 +21,11 @@ def cascade(labeledPointRDD, reducer, nmax):
         print 'Size of data: {}'.format(leafsRDD.count())
 
         numPartitions = int(numPartitions / 2)
-        leafsRDD = leafsRDD.mapPartitions(reducer).coalesce(numPartitions)
+
+        # need cache else lazy evaluation is killing
+        leafsRDD = leafsRDD.mapPartitions(reducer, True) \
+                           .coalesce(numPartitions) \
+                           .cache()
 
     return leafsRDD.collect()
 

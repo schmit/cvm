@@ -18,7 +18,7 @@ def objective(x):
 
 def parseData(line, obj):
     fields = line.strip().split(',')
-    return LabeledPoint(obj(int(fields[0])), [int(v) for v in fields[1:]])
+    return LabeledPoint(obj(int(fields[0])), [float(v)/255.0 for v in fields[1:]])
 
 
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     testRDD = sc.textFile('data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
 
     print 'Fitting model'
-    svm = KernelSVM(gamma=0.0000000001, C=1000000.0)
+    svm = KernelSVM(gamma=0.0000001, C=1000000.0)
     svm.train(trainRDD)
 
     print 'Predicting outcomes training set'
