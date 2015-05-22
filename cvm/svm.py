@@ -21,6 +21,11 @@ class BaseSVM(object):
         self.model = self.create_model()
         self.model.fit(X, y)
 
+    def simple_train(self, labeledPoints):
+        X, y = self._readiterator(labeledPoints.collect())
+        self.model = self.create_model()
+        self.model.fit(X, y)
+
     def predict(self, features):
         return self.model.predict(features)
 
@@ -28,14 +33,14 @@ class BaseSVM(object):
         X, y = self._readiterator(iterator)
         model = self.create_model()
         model.fit(X, y)
-        if len(model.support_) < len(y) / 2:
+        if len(model.support_) < self.nmax/2: #len(y) / 2:
             return self._returniterator(model.support_, X, y)
 
         vectors_lost = len(model.support_) - len(y)/2
         self.lost_svs += vectors_lost
         print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
-        random_indices = np.random.choice(model.support_, len(y) / 2, replace=False)
-        return self._returniterator(random_indices, X, y)
+        random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
+        return self._returniterator(random_indices, X, y) #len(y) / 2
 
     def _readiterator(self, iterator):
         ys = []
