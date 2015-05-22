@@ -26,7 +26,7 @@ if __name__ == "__main__":
     sc = SparkContext(conf=conf, batchSize=10)
 
     print 'Parsing data'
-    data = sc.textFile('data/covertype/shuffle_scaled_covtype.data').collect()
+    data = sc.textFile('../data/covertype/shuffle_scaled_covtype.data').collect()
     
     # Split data aproximately into training (60%) and test (40%)
     data, throwaway = train_test_split(data, train_size = 0.1)  
