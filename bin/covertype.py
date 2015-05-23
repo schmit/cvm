@@ -16,7 +16,7 @@ def parseData(line):
 if __name__ == "__main__":
     if (len(sys.argv) != 1):
         print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
-            "mnist.py"
+            "./bin/covertype.py"
         sys.exit(1)
 
     # set up environment
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     print 'Parsing data'
     data = sc.textFile('../data/covertype/shuffle_scaled_covtype.data').collect()
-    
+   
     # Split data aproximately into training (60%) and test (40%)
     data, throwaway = train_test_split(data, train_size = 0.1)  
     train, test = train_test_split(data, train_size = 0.6)    
@@ -39,8 +39,8 @@ if __name__ == "__main__":
     print "Size of test set: ", testRDD.count()
 
     print 'Fitting model'
-    svm = NuSVC(gamma=8.0, nu=0.5, nmax=2000)
-    svm.train(trainRDD)
+    svm = SVC(C=100, gamma=10.0, nmax=5000)
+    svm.loopy_train(trainRDD)
 
     print 'Predicting outcomes training set'
     labelsAndPredsTrain = trainRDD.map(lambda p: (p.label, svm.predict(p.features)))
@@ -52,16 +52,19 @@ if __name__ == "__main__":
     testErr = labelsAndPredsTest.filter(lambda (v, p): v != p).count() / float(testRDD.count())
     print("Test Error = " + str(testErr))
 
-    # ############################################################################################
+     # clean up
+    sc.stop()
+
+    # # ############################################################################################
     # Subsample and split data aproximately into training (60%) and test (40%)
-    small_trainRDD = sc.textFile('data/covertype/trainCovtype.data').map(parseData).cache()
-    small_testRDD = sc.textFile('data/covertype/testCovtype.data').map(parseData).cache()
+    small_trainRDD = sc.parallelize(train).map(parseData).cache()    #sc.textFile('../data/covertype/trainCovtype.data').map(parseData).cache()
+    small_testRDD = sc.parallelize(test).map(parseData).cache()     #sc.textFile('../data/covertype/testCovtype.data').map(parseData).cache()
 
     print "Size of downsampled train set: ", small_trainRDD.count()
     print "Size of downsapled test set: ", small_testRDD.count()
 
     print 'Fitting a simple model on heavily downsapled data'
-    simple_svm = SVC(C=100, gamma=1.0)
+    simple_svm = NuSVC(nu=0.5, gamma=1.0)
     simple_svm.simple_train(small_trainRDD)
 
     print 'Predicting outcomes small training set'
