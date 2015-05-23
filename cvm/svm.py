@@ -46,23 +46,26 @@ class BaseSVM(object):
 
     def loopy_train(self, labeledPoints):
         #stopCondition=False
-        labeledPoints = self._repartition(labeledPoints, self.nmax).cache()
-
+        labeledPoints0 = self._repartition(labeledPoints, self.nmax).cache()
+        labeledPoints = labeledPoints0
         for i in xrange(3): # while stopCondition==False:
             filteredLabeledPoints = cascade(labeledPoints, self._reduce)
             X, y = self._readiterator(filteredLabeledPoints)
+            Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
+            _, unique_idx = np.unique(Z, return_index=True)
+            X = X[np.sort(unique_idx)]
+            y = y[np.sort(unique_idx)]
             model = self.create_model()
             model.fit(X, y)
 
-            labelsAndPredsTrain = labeledPoints.map(lambda p: (p.label, model.predict(p.features)))
-            trainErr = labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(labeledPoints.count())
+            labelsAndPredsTrain = labeledPoints0.map(lambda p: (p.label, model.predict(p.features)))
+            trainErr = labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(labeledPoints0.count())
             print("[IMPORTANT] Training Error at round (" + str(i) + ") = " + str(trainErr))
 
             sharedSVIter = self._returniterator(model.support_, X, y)
             self.shared_SVs, self.shared_SVLab = self._readiterator(sharedSVIter)
 
             print ("Number of shared SVs after round (" + str(i) + ") = " + str( self.shared_SVs.shape[0]))
-
             labeledPoints = combineSharedSVs(labeledPoints, self._reduce_with_shared_SVs)
             self.lost_svs = 0
             fractionOfNewSVs = fraction_new_svs(labeledPoints, self._fracNewSVs)
@@ -72,6 +75,10 @@ class BaseSVM(object):
 
         filteredLabeledPoints = cascade(labeledPoints, self._reduce)
         X, y = self._readiterator(filteredLabeledPoints)
+        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
+        _, unique_idx = np.unique(Z, return_index=True)
+        X = X[np.sort(unique_idx)]
+        y = y[np.sort(unique_idx)]
         self.model = self.create_model()
         self.model.fit(X, y)
 

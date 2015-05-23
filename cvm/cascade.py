@@ -29,5 +29,5 @@ def combineSharedSVs(labeledPointsRDD, reducer):
     return newLabeledPointsRDD
 
 def fraction_new_svs(labeledPointsRDD, reducer):
-    frac = labeledPointsRDD.mapPartitions(reducer, True)
+    frac = labeledPointsRDD.mapPartitions(reducer, True).cache()
     return frac.collect()
