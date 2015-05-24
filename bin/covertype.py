@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print "Size of test set: ", testRDD.count()
 
     print 'Fitting model'
-    svm = SVC(C=100.0, gamma=10.0, nmax=5000)
+    svm = SVC(C=100.0, gamma=10.0, nmax=7000)
     svm.loopy_train(trainRDD)
 
     print 'Predicting outcomes training set'
@@ -54,28 +54,27 @@ if __name__ == "__main__":
 
 
     # # # ############################################################################################
-    # # Subsample and split data aproximately into training (60%) and test (40%)
-    # small_trainRDD = sc.parallelize(train).map(parseData).cache()    #sc.textFile('../data/covertype/trainCovtype.data').map(parseData).cache()
-    # small_testRDD = sc.parallelize(test).map(parseData).cache()     #sc.textFile('../data/covertype/testCovtype.data').map(parseData).cache()
+    # Subsample and split data aproximately into training (60%) and test (40%)
+    small_trainRDD = sc.parallelize(train).map(parseData).cache()    #sc.textFile('../data/covertype/trainCovtype.data').map(parseData).cache()
+    small_testRDD = sc.parallelize(test).map(parseData).cache()     #sc.textFile('../data/covertype/testCovtype.data').map(parseData).cache()
 
-    # print "Size of downsampled train set: ", small_trainRDD.count()
-    # print "Size of downsapled test set: ", small_testRDD.count()
+    print "Size of downsampled train set: ", small_trainRDD.count()
+    print "Size of downsapled test set: ", small_testRDD.count()
 
-    # print 'Fitting a simple model on heavily downsapled data'
-    # simple_svm = SVC(C=128, gamma=8.0)
-    # simple_svm.simple_train(small_trainRDD)
+    print 'Fitting a simple model on heavily downsapled data'
+    simple_svm = SVC(C=100.0, gamma=10.0)
+    simple_svm.simple_train(small_trainRDD)
 
-    # print 'Number of support vectors = ', len(simple_svm.support_)
-    # print 'Predicting outcomes small training set'
-    # simple_labelsAndPredsTrain = small_trainRDD.map(lambda p: (p.label, simple_svm.predict(p.features)))
-    # simple_trainErr = simple_labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(small_trainRDD.count())
-    # print("Training Error = " + str(simple_trainErr))
+    print 'Predicting outcomes small training set'
+    simple_labelsAndPredsTrain = small_trainRDD.map(lambda p: (p.label, simple_svm.predict(p.features)))
+    simple_trainErr = simple_labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(small_trainRDD.count())
+    print("Training Error = " + str(simple_trainErr))
 
-    # print 'Predicting outcomes small test set'
-    # simple_labelsAndPredsTest = small_testRDD.map(lambda p: (p.label, simple_svm.predict(p.features)))
-    # simple_testErr = simple_labelsAndPredsTest.filter(lambda (v, p): v != p).count() / float(small_testRDD.count())
-    # print("Test Error = " + str(simple_testErr))
+    print 'Predicting outcomes small test set'
+    simple_labelsAndPredsTest = small_testRDD.map(lambda p: (p.label, simple_svm.predict(p.features)))
+    simple_testErr = simple_labelsAndPredsTest.filter(lambda (v, p): v != p).count() / float(small_testRDD.count())
+    print("Test Error = " + str(simple_testErr))
 
-    # # clean up
-    # sc.stop()
+    # clean up
+    sc.stop()
 

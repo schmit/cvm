@@ -9,28 +9,14 @@ from pyspark.mllib.regression import LabeledPoint
 
 from cascade import *
     
-
-# def readiterator(iterator):
-#     ys = []
-#     xs = []
-#     for elem in iterator:
-#         ys.append(elem.label)
-#         xs.append(elem.features)
-
-#     X = np.array(xs)
-#     y = np.array(ys)
-#     return X, y
-
-# def returniterator(indices, X, y):
-#     for i in indices:
-#         yield LabeledPoint(y[i], X[i])
-
-
 class BaseSVM(object):
     def __init__(self, nmax):
         self.nmax = nmax
         # self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
         self.lost_svs = 0
+        self.sharedSVs = None
+        self.sharedSVLab = None
+
 
     def train(self, labeledPoints):
         labeledPoints = self._repartition(labeledPoints, self.nmax)
@@ -43,6 +29,8 @@ class BaseSVM(object):
         X, y = self._readiterator(labeledPoints.collect())
         self.model = self.create_model()
         self.model.fit(X, y)
+        print '[Simple Model] number of support vectors = ', len(self.model.support_)
+
 
     def loopy_train(self, labeledPoints):
         #stopCondition=False
@@ -51,34 +39,29 @@ class BaseSVM(object):
         for i in xrange(3): # while stopCondition==False:
             filteredLabeledPoints = cascade(labeledPoints, self._reduce)
             X, y = self._readiterator(filteredLabeledPoints)
-            Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
-            _, unique_idx = np.unique(Z, return_index=True)
-            X = X[np.sort(unique_idx)]
-            y = y[np.sort(unique_idx)]
+            X, y = self._get_unique_rows(X, y)
             model = self.create_model()
             model.fit(X, y)
-
             labelsAndPredsTrain = labeledPoints0.map(lambda p: (p.label, model.predict(p.features)))
             trainErr = labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(labeledPoints0.count())
             print("[IMPORTANT] Training Error at round (" + str(i) + ") = " + str(trainErr))
 
             sharedSVIter = self._returniterator(model.support_, X, y)
-            self.shared_SVs, self.shared_SVLab = self._readiterator(sharedSVIter)
-
-            print ("Number of shared SVs after round (" + str(i) + ") = " + str( self.shared_SVs.shape[0]))
-            labeledPoints = combineSharedSVs(labeledPoints, self._reduce_with_shared_SVs)
+            self.sharedSVs, self.sharedSVLab = self._readiterator(sharedSVIter)
+            print ("Number of shared SVs after round (" + str(i) + ") = " + str( self.sharedSVs.shape[0]))
+            
+            labeledPoints = combine_shared_svs(labeledPoints0, self._combine_with_shared_svs)
             self.lost_svs = 0
-            fractionOfNewSVs = fraction_new_svs(labeledPoints, self._fracNewSVs)
+
+            # The following 3 lines can be commented out if you don't want to print out progress 
+            fractionOfNewSVs = fraction_new_svs(labeledPoints0, self._frac_new_svs)
             print "Fractions of partition specific SVs not in the shared SV pool: "
             print fractionOfNewSVs
             #stopCondition = np.all(fractionOfNewSVs < 0.1)  
 
         filteredLabeledPoints = cascade(labeledPoints, self._reduce)
         X, y = self._readiterator(filteredLabeledPoints)
-        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
-        _, unique_idx = np.unique(Z, return_index=True)
-        X = X[np.sort(unique_idx)]
-        y = y[np.sort(unique_idx)]
+        X, y = self._get_unique_rows(X, y)
         self.model = self.create_model()
         self.model.fit(X, y)
 
@@ -93,10 +76,7 @@ class BaseSVM(object):
 
     def _reduce(self, iterator):
         X, y = self._readiterator(iterator)
-        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
-        _, unique_idx = np.unique(Z, return_index=True)
-        X = X[np.sort(unique_idx)]
-        y = y[np.sort(unique_idx)]
+        X, y = self._get_unique_rows(X, y)
 
         model = self.create_model()
         model.fit(X, y)
@@ -109,41 +89,18 @@ class BaseSVM(object):
         random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
         return self._returniterator(random_indices, X, y) #len(y) / 2
 
-    def _reduce_with_shared_SVs(self, iterator):
+    def _combine_with_shared_svs(self, iterator):
         X, y = self._readiterator(iterator)
+        X = np.vstack([X, self.sharedSVs])
+        y = np.asarray(y.tolist() + self.sharedSVLab.tolist())
+        X, y = self._get_unique_rows(X, y)
+        return self._returniterator(range(X.shape[0]), X, y) # self._returniterator(random_indices, X, y) 
 
-        X = np.vstack([X, self.shared_SVs])
-        y = np.asarray(y.tolist() + self.shared_SVLab.tolist())
-        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
-        _, unique_idx = np.unique(Z, return_index=True)
-
-        X = X[np.sort(unique_idx)]
-        y = y[np.sort(unique_idx)]
-
-        model = self.create_model()
-        model.fit(X, y)
-        newLabeledSVIter = self._returniterator(model.support_, X, y)
-        
-        if len(model.support_) < self.nmax/2: 
-            return newLabeledSVIter
-
-        vectors_lost = len(model.support_) - self.nmax/2
-        self.lost_svs += vectors_lost
-        print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
-        random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
-
-        return self._returniterator(random_indices, X, y) 
-
-    def _fracNewSVs(self, iterator):
+    def _frac_new_svs(self, iterator):
         X, y = self._readiterator(iterator)
-
-        X = np.vstack([X, self.shared_SVs])
-        y = np.asarray(y.tolist() + self.shared_SVLab.tolist())
-        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
-        _, unique_idx = np.unique(Z, return_index=True)
-
-        X = X[np.sort(unique_idx)]
-        y = y[np.sort(unique_idx)]
+        X = np.vstack([X, self.sharedSVs])
+        y = np.asarray(y.tolist() + self.sharedSVLab.tolist())
+        X, y = self._get_unique_rows(X, y)
 
         model = self.create_model()
         model.fit(X, y)
@@ -151,15 +108,22 @@ class BaseSVM(object):
 
         newSVs, newSVlabels = self._readiterator(newLabeledSVIter)
         dt = np.dtype((np.void, newSVs.dtype.itemsize * newSVs.shape[1]))
-        sv_intersection_idx = np.nonzero(np.in1d(newSVs.view(dt).reshape(-1), self.shared_SVs.view(dt).reshape(-1)))[0]
+        sv_intersection_idx = np.nonzero(np.in1d(newSVs.view(dt).reshape(-1), self.sharedSVs.view(dt).reshape(-1)))[0]
         numIntersectSVs = sv_intersection_idx.shape[0]
+
         print 'Size of union of partition and shared SVs: ', X.shape[0]
         print "# SVs trained on a union of partition and shared SVs: ", newSVs.shape[0]
         print "# of intersecting SVs: ", numIntersectSVs
-        frac_new_svs = (newSVs.shape[0] - numIntersectSVs)*1.0/self.shared_SVs.shape[0]
+        frac_new_svs = (newSVs.shape[0] - numIntersectSVs)*1.0/self.sharedSVs.shape[0]
         print "Ration # new SVs / # shared SVs: ", frac_new_svs
         return iter([frac_new_svs])
 
+    def _get_unique_rows(self, X, y):
+        Z = X.ravel().view(np.dtype((np.void, X.dtype.itemsize*X.shape[1])))
+        _, unique_idx = np.unique(Z, return_index=True)
+        X = X[np.sort(unique_idx)]
+        y = y[np.sort(unique_idx)]
+        return X, y
 
     def _readiterator(self, iterator):
         ys = []

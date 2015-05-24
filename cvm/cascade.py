@@ -24,7 +24,7 @@ def cascade(leafsRDD, reducer):
                            .cache()
     return leafsRDD.collect()
 
-def combineSharedSVs(labeledPointsRDD, reducer):
+def combine_shared_svs(labeledPointsRDD, reducer):
     newLabeledPointsRDD = labeledPointsRDD.mapPartitions(reducer, True).cache()
     return newLabeledPointsRDD
 
