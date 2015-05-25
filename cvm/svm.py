@@ -1,5 +1,5 @@
 '''
-WIP Combines Cascade and Models
+Implements Support vector methods using the Cascade
 '''
 
 import random
