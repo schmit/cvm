@@ -10,7 +10,9 @@ import sys
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
-from cvm.svm import NuSVC
+from cvm.svm import SVC
+from cvm.kreg import KernelLogisticRegression
+
 
 def objective(x):
     # prediction objective
@@ -38,16 +40,18 @@ if __name__ == "__main__":
     testRDD = sc.textFile('data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
 
     print 'Fitting model'
-    svm = NuSVC(gamma=0.01, nu=0.3)
-    svm.train(trainRDD)
+    # model = SVC(gamma=0.02, C=1.0, nmax=2000)
+    model = KernelLogisticRegression(gamma=0.01, C=2.0, nmax=3000)
+
+    model.train(trainRDD)
 
     print 'Predicting outcomes training set'
-    labelsAndPredsTrain = trainRDD.map(lambda p: (p.label, svm.predict(p.features)))
+    labelsAndPredsTrain = trainRDD.map(lambda p: (p.label, model.predict(p.features)))
     trainErr = labelsAndPredsTrain.filter(lambda (v, p): v != p).count() / float(trainRDD.count())
     print("Training Error = " + str(trainErr))
 
     print 'Predicting outcomes test set'
-    labelsAndPredsTest = testRDD.map(lambda p: (p.label, svm.predict(p.features)))
+    labelsAndPredsTest = testRDD.map(lambda p: (p.label, model.predict(p.features)))
     testErr = labelsAndPredsTest.filter(lambda (v, p): v != p).count() / float(testRDD.count())
     print("Test Error = " + str(testErr))
 
