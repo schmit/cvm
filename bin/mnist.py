@@ -38,8 +38,8 @@ if __name__ == "__main__":
     testRDD = sc.textFile('../data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
 
     print 'Fitting model'
-    svm = NuSVC(gamma=0.01, nu=0.3)
-    svm.train(trainRDD)
+    svm = NuSVC(gamma=0.001, nu=0.4, nmax = 7000)
+    svm.loopy_train(trainRDD)
 
     print 'Predicting outcomes training set'
     labelsAndPredsTrain = trainRDD.map(lambda p: (p.label, svm.predict(p.features)))

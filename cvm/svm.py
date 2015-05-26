@@ -36,7 +36,7 @@ class BaseSVM(object):
         #stopCondition=False
         labeledPoints0 = self._repartition(labeledPoints, self.nmax).cache()
         labeledPoints = labeledPoints0
-        for i in xrange(3): # while stopCondition==False:
+        for i in xrange(5): # while stopCondition==False:
             filteredLabeledPoints = cascade(labeledPoints, self._reduce)
             X, y = self._readiterator(filteredLabeledPoints)
             X, y = self._get_unique_rows(X, y)

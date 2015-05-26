@@ -1,0 +1,11 @@
+Parsing data
+Size of downsampled train set:  34860
+Size of downsapled test set:  23241
+Fitting a simple model on heavily downsapled data
+Model parameters: C=100.0; gamma=10.0nmax=10000
+[Simple Model] number of support vectors =  11380
+Simple SVM train on 34860 samples took 520.279995918 time.
+Predicting outcomes small training set
+Training Error = 0.0361445783133
+Predicting outcomes small test set
+Test Error = 0.122542059292

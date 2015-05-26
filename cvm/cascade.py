@@ -31,3 +31,15 @@ def combine_shared_svs(labeledPointsRDD, reducer):
 def fraction_new_svs(labeledPointsRDD, reducer):
     frac = labeledPointsRDD.mapPartitions(reducer, True).cache()
     return frac.collect()
+
+
+def readiterator(iterator):
+    ys = []
+    xs = []
+    for elem in iterator:
+        ys.append(elem.label)
+        xs.append(elem.features)
+
+    X = np.array(xs)
+    y = np.array(ys)
+    return X, y
