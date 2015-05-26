@@ -36,7 +36,7 @@ class BaseKernelReg(Model):
         X, y = self._readiterator(iterator)
 
         # if few datapoints, don't thin further
-        if len(y) < self.nmax/2:
+        if len(y) < self.nmax / 2:
             return self._returniterator(xrange(len(y)), X, y)
 
         _, support = self._fit(X, y)
