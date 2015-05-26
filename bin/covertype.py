@@ -5,6 +5,10 @@ from cvm.svm import SVC
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
+C = 100.0
+gamma = 10.0
+nmax = 2000
+
 
 def parseData(line):
     fields = line.strip().split(",")
@@ -36,7 +40,7 @@ if __name__ == "__main__":
     print "Number of test samples: ", testRDD.count()
 
     print 'Fitting model'
-    svm = SVC(gamma=1.2, C=1.0, nmax=5000)
+    svm = SVC(gamma=gamma, C=C, nmax=nmax)
     svm.train(trainRDD)
 
     print 'Predicting outcomes training set'
