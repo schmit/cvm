@@ -1,29 +1,23 @@
 '''
-WIP Combines Cascade and Models
+Implements Support vector methods using the Cascade
 '''
 
 import random
 import numpy as np
 from sklearn import svm
-from pyspark.mllib.regression import LabeledPoint
 
 from cascade import *
-    
-class BaseSVM(object):
-    def __init__(self, nmax):
-        self.nmax = nmax
-        # self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
-        self.lost_svs = 0
-        self.sharedSVs = None
-        self.sharedSVLab = None
+from model import Model
 
-
+class BaseSVM(Model):
     def train(self, labeledPoints):
         labeledPoints = self._repartition(labeledPoints, self.nmax)
         labeledPoints = cascade(labeledPoints, self._reduce)
         X, y = self._readiterator(labeledPoints)
         self.model = self.create_model()
         self.model.fit(X, y)
+        self.sharedSVs = None
+        self.sharedSVLab = None
 
     def simple_train(self, labeledPoints):
         X, y = self._readiterator(labeledPoints.collect())
@@ -32,11 +26,10 @@ class BaseSVM(object):
         print '[Simple Model] number of support vectors = ', len(self.model.support_)
 
 
-    def loopy_train(self, labeledPoints):
-        #stopCondition=False
+    def loopy_train(self, labeledPoints, numLoops=5):
         labeledPoints0 = self._repartition(labeledPoints, self.nmax).cache()
         labeledPoints = labeledPoints0
-        for i in xrange(5): # while stopCondition==False:
+        for i in xrange(numLoops): 
             filteredLabeledPoints = cascade(labeledPoints, self._reduce)
             X, y = self._readiterator(filteredLabeledPoints)
             X, y = self._get_unique_rows(X, y)
@@ -57,7 +50,6 @@ class BaseSVM(object):
             fractionOfNewSVs = fraction_new_svs(labeledPoints0, self._frac_new_svs)
             print "Fractions of partition specific SVs not in the shared SV pool: "
             print fractionOfNewSVs
-            #stopCondition = np.all(fractionOfNewSVs < 0.1)  
 
         filteredLabeledPoints = cascade(labeledPoints, self._reduce)
         X, y = self._readiterator(filteredLabeledPoints)
@@ -78,16 +70,20 @@ class BaseSVM(object):
         X, y = self._readiterator(iterator)
         X, y = self._get_unique_rows(X, y)
 
+        # if few datapoints, don't thin further
+        if len(y) < self.nmax/2:
+            return self._returniterator(xrange(len(y)), X, y)
+
         model = self.create_model()
         model.fit(X, y)
         if len(model.support_) < self.nmax/2: #len(y) / 2:
             return self._returniterator(model.support_, X, y)
 
         vectors_lost = len(model.support_) - self.nmax/2
-        self.lost_svs += vectors_lost
+        self.lost += vectors_lost
         print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
         random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
-        return self._returniterator(random_indices, X, y) #len(y) / 2
+        return self._returniterator(random_indices, X, y) 
 
     def _combine_with_shared_svs(self, iterator):
         X, y = self._readiterator(iterator)
@@ -125,21 +121,6 @@ class BaseSVM(object):
         y = y[np.sort(unique_idx)]
         return X, y
 
-    def _readiterator(self, iterator):
-        ys = []
-        xs = []
-        for elem in iterator:
-            ys.append(elem.label)
-            xs.append(elem.features)
-
-        X = np.array(xs)
-        y = np.array(ys)
-        return X, y
-
-    def _returniterator(self, indices, X, y):
-        for i in indices:
-            yield LabeledPoint(y[i], X[i])
-
 
 class SVC(BaseSVM):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
@@ -169,8 +150,6 @@ class RandomSVM(BaseSVM):
     def __init__(self, kernel='rbf', degree=3, C=1.0, gamma=1.0, nmax=2000):
         self.nmax = nmax
         self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
-
-        self.lost_svs = 0
 
     def _reduce(self, iterator):
         for elem in iterator:
