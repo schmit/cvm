@@ -76,14 +76,15 @@ class BaseSVM(Model):
 
         model = self.create_model()
         model.fit(X, y)
-        if len(model.support_) < self.nmax/2: #len(y) / 2:
+
+        if len(model.support_) < self.nmax / 2:
             return self._returniterator(model.support_, X, y)
 
-        vectors_lost = len(model.support_) - self.nmax/2
+        vectors_lost = len(model.support_) - self.nmax / 2
         self.lost += vectors_lost
         print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
         random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
-        return self._returniterator(random_indices, X, y) 
+        return self._returniterator(random_indices, X, y)
 
     def _combine_with_shared_svs(self, iterator):
         X, y = self._readiterator(iterator)
@@ -120,6 +121,7 @@ class BaseSVM(Model):
         X = X[np.sort(unique_idx)]
         y = y[np.sort(unique_idx)]
         return X, y
+
 
 
 class SVC(BaseSVM):
