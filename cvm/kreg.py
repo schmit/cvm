@@ -64,6 +64,7 @@ class BaseKernelReg(Model):
 class KernelLogisticRegression(BaseKernelReg):
     def __init__(self, kernel='rbf', gamma=1.0, C=1.0, nmax=1000):
         super(KernelLogisticRegression, self).__init__(kernel, gamma, nmax)
+        self.C = C
         self.create_model = lambda : LogisticRegression('l1', C=C)
 
 
