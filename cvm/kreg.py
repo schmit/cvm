@@ -40,13 +40,13 @@ class BaseKernelReg(Model):
             return self._returniterator(xrange(len(y)), X, y)
 
         _, support = self._fit(X, y)
-        if len(support) < len(y) / 2:
+        if len(support) < self.nmax / 2:
             return self._returniterator(support, X, y)
 
-        vectors_lost = len(support) - len(y)/2
+        vectors_lost = len(support) - self.nmax / 2
         self.lost += vectors_lost
         print 'Warning: {} relevant vectors thrown away!'.format(vectors_lost)
-        random_indices = np.random.choice(support, len(y) / 2, replace=False)
+        random_indices = np.random.choice(support, self.nmax / 2, replace=False)
         return self._returniterator(random_indices, X, y)
 
     def _fit(self, X, y, newC=None):
