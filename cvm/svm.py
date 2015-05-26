@@ -21,6 +21,11 @@ class BaseSVM(Model):
 
     def _reduce(self, iterator):
         X, y = self._readiterator(iterator)
+
+        # if few datapoints, don't thin further
+        if len(y) < self.nmax/2:
+            return self._returniterator(xrange(len(y)), X, y)
+
         model = self.create_model()
         model.fit(X, y)
         if len(model.support_) < len(y) / 2:
@@ -61,8 +66,6 @@ class RandomSVM(BaseSVM):
     def __init__(self, kernel='rbf', degree=3, C=1.0, gamma=1.0, nmax=2000):
         self.nmax = nmax
         self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
-
-        self.lost = 0
 
     def _reduce(self, iterator):
         for elem in iterator:
