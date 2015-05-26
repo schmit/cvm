@@ -23,7 +23,9 @@ class BaseKernelReg(Model):
     def train(self, labeledPoints):
         labeledPoints = cascade(labeledPoints, self._reduce, self.nmax)
         self.X, y = self._readiterator(labeledPoints)
-        self.model, self.support = self._fit(self.X, y)
+
+        # final model does not need regularization
+        self.model, self.support = self._fit(self.X, y, newC=self.C * 10.0)
 
     def predict(self, features):
         f = features.reshape(1, len(features))
@@ -47,9 +49,13 @@ class BaseKernelReg(Model):
         random_indices = np.random.choice(support, len(y) / 2, replace=False)
         return self._returniterator(random_indices, X, y)
 
-    def _fit(self, X, y):
+    def _fit(self, X, y, newC=None):
         K = self.kernel(X, X)
         model = self.create_model()
+        if newC:
+            model.C = newC
+            model.penalty = 'l2'
+
         model.fit(K, y)
         support = np.nonzero(np.sum(np.abs(model.coef_), 0))[0]
         return model, support
