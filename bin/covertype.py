@@ -1,26 +1,30 @@
 import sys
 
-from cvm.svm import SVC
+import time
+from sklearn import svm as sklearnSVM
+from cvm.svm import NuSVC, SVC
+from sklearn.cross_validation import train_test_split
+from cvm.cascade import readiterator
 
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
-C = 100.0
-gamma = 10.0
-nmax = 2000
-
 
 def parseData(line):
     fields = line.strip().split(",")
-    label = int(fields[-1])
-    feature = [float(feature) for feature in fields[:10]] #fields[0: -1]
-    return LabeledPoint(1*(label==2), feature)
+    label = int(int(fields[-1]) == 2)
+    feature = [float(feature) for feature in fields[: -1]]
+    return LabeledPoint(label, feature)
 
 
 if __name__ == "__main__":
+    C1 = 100.0
+    gamma1 = 10.0
+    nmax1 = 2000
+
     if (len(sys.argv) != 1):
         print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
-            "covertype.py"
+            "./bin/covertype.py"
         sys.exit(1)
 
     # set up environment
@@ -36,12 +40,18 @@ if __name__ == "__main__":
 
     print trainRDD.first().label, trainRDD.first().features
 
-    print "Number of train samples: ", trainRDD.count()
-    print "Number of test samples: ", testRDD.count()
 
-    print 'Fitting model'
-    svm = SVC(gamma=gamma, C=C, nmax=nmax)
+    print "Size of train set: ", trainRDD.count()
+    print "Size of test set: ", testRDD.count()
+
+    print 'Fitting cascade model'
+    print("Model parameters: C=" + str(C1) + "; gamma=" + str(gamma1) + "; nmax=" + str(nmax1))
+    svm = SVC(C=C1, gamma=gamma1, nmax=nmax1)
+    start = time.time()
     svm.train(trainRDD)
+    #svm.loopy_train(trainRDD)
+    end = time.time()
+    print("Cascade SVM train on " + str(trainRDD.count()) + " samples took " + str(end - start) + " time.")
 
     print 'Predicting outcomes training set'
     labelsAndPredsTrain = trainRDD.map(lambda p: (p.label, svm.predict(p.features)))
@@ -55,3 +65,4 @@ if __name__ == "__main__":
 
     # clean up
     sc.stop()
+
