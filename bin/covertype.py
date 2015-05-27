@@ -6,14 +6,14 @@ from pyspark import SparkConf, SparkContext
 from pyspark.mllib.regression import LabeledPoint
 
 C = 100.0
-gamma = 10.0
-nmax = 2000
+gamma = 0.6
+nmax = 10000
 
 
 def parseData(line):
     fields = line.strip().split(",")
     label = int(fields[-1])
-    feature = [float(feature) for feature in fields[:10]] #fields[0: -1]
+    feature = [float(feature)*3 for feature in fields[:10]] + [float(feature) for feature in fields[10:-1]] #fields[0: -1]
     return LabeledPoint(1*(label==2), feature)
 
 
