@@ -1,9 +1,0 @@
-bin/mnist.py
-cvm/__init__.py
-cvm/cascade.py
-cvm/svm.py
-cvm.egg-info/PKG-INFO
-cvm.egg-info/SOURCES.txt
-cvm.egg-info/dependency_links.txt
-cvm.egg-info/requires.txt
-cvm.egg-info/top_level.txt

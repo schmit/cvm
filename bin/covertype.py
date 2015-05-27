@@ -11,7 +11,7 @@ from pyspark.mllib.regression import LabeledPoint
 def parseData(line):
     fields = line.strip().split(",")
     label = int(int(fields[-1]) == 2)
-    feature = [float(feature) for feature in fields[: -1]] #fields[0: -1]
+    feature = [float(feature) for feature in fields[: -1]] 
     return LabeledPoint(label, feature)
 
 
