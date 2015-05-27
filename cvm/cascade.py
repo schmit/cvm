@@ -10,12 +10,8 @@ from __future__ import division
 
 import numpy as np
 
-def cascade(labeledPointRDD, reducer, nmax):
-    n = labeledPointRDD.count()
-    numPartitions = int(2**(np.ceil(np.log(n / nmax)/np.log(2.0))))
-    # numLevels = int(np.round(np.log(numPartitions) / np.log(2) + 1))
-    leafsRDD = labeledPointRDD.repartition(numPartitions)
-
+def cascade(leafsRDD, reducer):
+    numPartitions = leafsRDD.getNumPartitions()
     while numPartitions > 1:
         print 'Currently {} partitions left'.format(numPartitions)
         print 'Size of data: {}'.format(leafsRDD.count())
@@ -26,7 +22,24 @@ def cascade(labeledPointRDD, reducer, nmax):
         leafsRDD = leafsRDD.mapPartitions(reducer, True) \
                            .coalesce(numPartitions) \
                            .cache()
-
     return leafsRDD.collect()
 
+def combine_shared_svs(labeledPointsRDD, reducer):
+    newLabeledPointsRDD = labeledPointsRDD.mapPartitions(reducer, True).cache()
+    return newLabeledPointsRDD
 
+def fraction_new_svs(labeledPointsRDD, reducer):
+    frac = labeledPointsRDD.mapPartitions(reducer, True).cache()
+    return frac.collect()
+
+
+def readiterator(iterator):
+    ys = []
+    xs = []
+    for elem in iterator:
+        ys.append(elem.label)
+        xs.append(elem.features)
+
+    X = np.array(xs)
+    y = np.array(ys)
+    return X, y
