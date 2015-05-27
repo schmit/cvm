@@ -18,7 +18,7 @@ def parseData(line):
 if __name__ == "__main__":
     C1 = 100.0
     gamma1 = 10.0
-    nmax1 = 20000
+    nmax1 = 2000
 
     if (len(sys.argv) != 1):
         print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
@@ -49,6 +49,7 @@ if __name__ == "__main__":
     svm = SVC(C=C1, gamma=gamma1, nmax=nmax1)
     start = time.time()
     svm.train(trainRDD)
+    #svm.loopy_train(trainRDD)
     end = time.time()
     print("Cascade SVM train on " + str(trainRDD.count()) + " samples took " + str(end - start) + " time.")
 
