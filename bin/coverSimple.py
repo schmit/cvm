@@ -18,7 +18,6 @@ def parseData(line):
 if __name__ == "__main__":
     C1 = 100.0
     gamma1 = 10.0
-    nmax1 = 20000
 
     if (len(sys.argv) != 1):
         print "Usage: [usb root directory]/spark/bin/spark-submit --driver-memory 2g " + \
