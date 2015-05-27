@@ -36,14 +36,10 @@ if __name__ == "__main__":
     sc = SparkContext(conf=conf, batchSize=10)
 
     print 'Parsing data'
-<<<<<<< HEAD
-    trainRDD = sc.textFile('../data/mnist/mnist_train.csv').map(lambda line: parseData(line, objective)).cache()
-    testRDD = sc.textFile('../data/mnist/mnist_test.csv').map(lambda line: parseData(line, objective)).cache()
-=======
+
     trainRDD = sc.textFile('data/mnist/train.csv').map(lambda line: parseData(line, objective)).cache()
     testRDD = sc.textFile('data/mnist/test.csv').map(lambda line: parseData(line, objective)).cache()
->>>>>>> 0e59322b79086c7a290a81cf6fa9c6c43a02f1e5
-
+    
     print 'Fitting model'
     # model = SVC(gamma=0.02, C=1.0, nmax=2000)
     model = KernelLogisticRegression(gamma=0.01, C=2.0, nmax=3000)
