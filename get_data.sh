@@ -5,8 +5,8 @@ rm -rf data
 
 # Get MNIST data
 mkdir -p data/mnist
-curl http://www.pjreddie.com/media/files/mnist_train.csv -o data/mnist/mnist_train.csv
-curl http://www.pjreddie.com/media/files/mnist_test.csv -o data/mnist/mnist_test.csv
+curl http://www.pjreddie.com/media/files/mnist_train.csv -o data/mnist/train.csv
+curl http://www.pjreddie.com/media/files/mnist_test.csv -o data/mnist/test.csv
 
 # Get covertype data
 mkdir -p data/covertype
