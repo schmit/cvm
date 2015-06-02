@@ -2,6 +2,8 @@
 
 A PySpark package that that implements Kernel SVM classification based on the Cascading SVM idea presented in [1].
 
+Note that currently the implementation only runs on single machines (though on multiple cores), as we are not distributing the model object for prediction.
+
 ## Install
 
 To install the `cvm` package, simply run
@@ -18,16 +20,24 @@ pip install -e .
 
 ## Examples
 
+To obtain the data, run the `./get_data.sh` script.
+
 ### MNIST Digit classification
 
-In this example, we classify digits as being 4 or less, versus 5 or higher,
-such that it is a binary classification problem.
+In this example, we classify the handwritten digit.
 
-First download the MNIST dataset in csv format [here](http://www.pjreddie.com/projects/mnist-in-csv/) and place in `data/mnist/` folder
-
-Then, from the top level directory, run
+From the top level directory, run
 ```
 [SPARKDIR]/bin/spark-submit --driver-memory 2g bin/mnist.py
+```
+
+### Forest Covertype classification
+
+In this example, we try to classify whether the forest covertype is of type 2 or not, such that the problem becomes a binary classification problem.
+
+From the top level directory, run
+```
+[SPARKDIR]/bin/spark-submit --driver-memory 2g bin/covertype.py
 ```
 
 ## Authors
