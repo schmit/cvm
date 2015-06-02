@@ -40,30 +40,28 @@ class BaseSVM(Model):
 
 
 class SVC(BaseSVM):
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, 
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0,
                  nmax=2000, max_sv=0.5):
         super(SVC, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.SVC(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
 
 class NuSVC(BaseSVM):
-    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, 
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0,
                  nmax=2000, max_sv=0.5):
-    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
         super(NuSVC, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.NuSVC(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
 
 
-class SVR(BaseSVM): 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, 
+class SVR(BaseSVM):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0,
                  nmax=2000, max_sv=0.5):
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
         super(SVR, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.SVR(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
 
 class NuSVR(BaseSVM):
-    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, 
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0,
                  nmax=2000, max_sv=0.5):
         super(SVR, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.NuSVR(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
