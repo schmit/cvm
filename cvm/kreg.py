@@ -11,14 +11,13 @@ from kernel import rbf_kernel
 
 
 class BaseKernelReg(Model):
-    def __init__(self, kernel, gamma=1.0, nmax=1000):
-        super(BaseKernelReg, self).__init__(nmax)
+    def __init__(self, kernel, gamma=1.0, nmax=1000, max_sv=0.5):
+        super(BaseKernelReg, self).__init__(nmax, max_sv)
 
         if kernel == 'rbf':
             self.kernel = lambda X, Y: rbf_kernel(X, Y, gamma)
         else:
             raise NotImplementedError('Kernel not supported')
-
 
     def train(self, labeledPoints):
         labeledPoints = cascade(labeledPoints, self._reduce, self.nmax)
@@ -62,8 +61,9 @@ class BaseKernelReg(Model):
 
 
 class KernelLogisticRegression(BaseKernelReg):
-    def __init__(self, kernel='rbf', gamma=1.0, C=1.0, nmax=1000):
-        super(KernelLogisticRegression, self).__init__(kernel, gamma, nmax)
+    def __init__(self, kernel='rbf', gamma=1.0, C=1.0, nmax=1000, max_sv=0.5):
+        super(KernelLogisticRegression, self).__init__(kernel, gamma, 
+              nmax, max_sv)
         self.C = C
         self.create_model = lambda : LogisticRegression('l1', C=C)
 

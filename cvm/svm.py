@@ -28,47 +28,43 @@ class BaseSVM(Model):
 
         model = self.create_model()
         model.fit(X, y)
-        if len(model.support_) < self.nmax / 2:
+        if len(model.support_) < self.max_sv:
             return self._returniterator(model.support_, X, y)
 
-        vectors_lost = len(model.support_) - self.nmax / 2
+        vectors_lost = len(model.support_) - self.max_sv
+
         self.lost += vectors_lost
         print 'Warning: {} relevant support vectors thrown away!'.format(vectors_lost)
-        random_indices = np.random.choice(model.support_, self.nmax / 2, replace=False)
+        random_indices = np.random.choice(model.support_, self.max_sv, replace=False)
         return self._returniterator(random_indices, X, y)
 
 
 class SVC(BaseSVM):
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
-        super(SVC, self).__init__(nmax)
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, 
+                 nmax=2000, max_sv=0.5):
+        super(SVC, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.SVC(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
 
 class NuSVC(BaseSVM):
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, 
+                 nmax=2000, max_sv=0.5):
     def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
-        super(NuSVC, self).__init__(nmax)
+        super(NuSVC, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.NuSVC(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
 
 
-class SVR(BaseSVM):
+class SVR(BaseSVM): 
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, 
+                 nmax=2000, max_sv=0.5):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
-        super(SVR, self).__init__(nmax)
+        super(SVR, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.SVR(C=C, kernel=kernel, degree=degree, gamma=gamma)
 
 
 class NuSVR(BaseSVM):
-    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, nmax=2000):
-        super(SVR, self).__init__(nmax)
+    def __init__(self, nu=0.3, kernel='rbf', degree=3, gamma=1.0, 
+                 nmax=2000, max_sv=0.5):
+        super(SVR, self).__init__(nmax, max_sv)
         self.create_model = lambda : svm.NuSVR(nu=nu, kernel=kernel, degree=degree, gamma=gamma)
-
-
-class RandomSVM(BaseSVM):
-    def __init__(self, kernel='rbf', degree=3, C=1.0, gamma=1.0, nmax=2000):
-        self.nmax = nmax
-        self.create_model = lambda : svm.SVC(kernel=kernel, C=C, gamma=gamma, degree=degree)
-
-    def _reduce(self, iterator):
-        for elem in iterator:
-            if random.random() < 0.5:
-                yield elem
 

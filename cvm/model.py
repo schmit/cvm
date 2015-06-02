@@ -6,9 +6,10 @@ from pyspark.mllib.regression import LabeledPoint
 
 
 class Model(object):
-    def __init__(self, nmax):
+    def __init__(self, nmax, max_sv=0.5):
         self.nmax = nmax
         self.lost = 0
+        self.max_sv = max_sv * nmax
 
     def train(self, labeledPoints):
         raise NotImplementedError
